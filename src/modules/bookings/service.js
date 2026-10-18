@@ -52,6 +52,10 @@ async function bookTickets({ customerId, eventId, ticketsCount, idempotencyKey }
       const won = await repo.findExistingBooking(customerId, idempotencyKey);
       if (won) return { booking: won, isNew: false };
     }
+    if (err.code === '22P02') {
+      // Invalid UUID format
+      throw new AppError(404, 'NOT_FOUND', 'Event not found');
+    }
     throw err;
   }
 
