@@ -58,11 +58,13 @@ async function processJob(job) {
   }
 }
 
-async function main() {
-  // Ensure schema is up to date
+let currentWorker = null;
+
+async function startWorker(customLogger) {
+  const log = customLogger || logger;
   await migrate();
 
-  const worker = new Worker('notifications', processJob, {
+  currentWorker = new Worker('notifications', processJob, {
     connection,
     concurrency: 10,
     limiter: {
@@ -71,27 +73,37 @@ async function main() {
     },
   });
 
-  worker.on('completed', (job, result) => {
-    logger.info({ jobId: job.id, result }, 'worker: job completed');
+  currentWorker.on('completed', (job, result) => {
+    log.info({ jobId: job.id, result }, 'worker: job completed');
   });
 
-  worker.on('failed', (job, err) => {
-    logger.error({ jobId: job?.id, err: err.message }, 'worker: job failed permanently');
+  currentWorker.on('failed', (job, err) => {
+    log.error({ jobId: job?.id, err: err.message }, 'worker: job failed permanently');
   });
 
-  worker.on('error', (err) => {
-    logger.error({ err: err.message }, 'worker: error');
+  currentWorker.on('error', (err) => {
+    log.error({ err: err.message }, 'worker: error');
   });
 
-  startDispatcher(logger);
+  startDispatcher(log);
 
-  logger.info('Worker process started');
+  log.info('Worker process started');
+  return currentWorker;
+}
 
-  // ── Graceful shutdown ────────────────────────────────────────────────────
+async function stopWorker() {
+  stopDispatcher();
+  if (currentWorker) {
+    await currentWorker.close();
+    currentWorker = null;
+  }
+}
+
+if (require.main === module) {
+  // ── Standalone execution ────────────────────────────────────────────────
   async function shutdown(signal) {
     logger.info({ signal }, 'Worker shutting down...');
-    stopDispatcher();
-    await worker.close();
+    await stopWorker();
     await closePool();
     logger.info('Worker closed. Goodbye.');
     process.exit(0);
@@ -103,9 +115,11 @@ async function main() {
   process.on('unhandledRejection', (reason) => {
     logger.error({ reason }, 'Worker: unhandled rejection');
   });
+
+  startWorker().catch((err) => {
+    logger.error({ err: err.message }, 'Worker fatal startup error');
+    process.exit(1);
+  });
 }
 
-main().catch((err) => {
-  logger.error({ err: err.message }, 'Worker fatal startup error');
-  process.exit(1);
-});
+module.exports = { startWorker, stopWorker, processJob };

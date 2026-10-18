@@ -4,12 +4,19 @@ const { buildApp, logger } = require('./app');
 const { migrate } = require('./db/migrate');
 const { closePool } = require('./db/pool');
 const config = require('./config');
+const { startWorker, stopWorker } = require('./worker');
 
 async function main() {
   // Run migrations on startup
   logger.info('Running migrations...');
   await migrate();
   logger.info('Migrations complete.');
+
+  // If running in single-service mode (e.g. Render free tier), start the worker alongside API
+  if (process.env.RUN_EMBEDDED_WORKER === 'true') {
+    logger.info('Starting embedded background worker & outbox dispatcher...');
+    await startWorker(logger);
+  }
 
   const app = buildApp();
 
@@ -24,6 +31,10 @@ async function main() {
     if (shuttingDown) return;
     shuttingDown = true;
     logger.info({ signal }, 'Shutting down...');
+
+    if (process.env.RUN_EMBEDDED_WORKER === 'true') {
+      await stopWorker();
+    }
 
     server.close(async () => {
       await closePool();
