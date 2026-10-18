@@ -1,0 +1,8 @@
+node_modules/
+.env
+*.log
+loadtest/results/*.json
+dist/
+coverage/
+.DS_Store
+Thumbs.db

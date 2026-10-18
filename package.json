@@ -1,0 +1,43 @@
+{
+  "name": "pulsetix",
+  "version": "1.0.0",
+  "description": "High-concurrency event booking REST API",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "start:worker": "node src/worker.js",
+    "dev": "node --watch src/server.js",
+    "dev:worker": "node --watch src/worker.js",
+    "migrate": "node src/db/migrate.js",
+    "lint": "eslint src tests --ext .js",
+    "lint:fix": "eslint src tests --ext .js --fix",
+    "test": "vitest run --reporter=verbose",
+    "test:watch": "vitest",
+    "test:concurrency": "vitest run tests/concurrency",
+    "mail:test": "node scripts/mail-test.js",
+    "jobs:retry-failed": "node scripts/retry-failed-jobs.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "bullmq": "^5.8.7",
+    "dotenv": "^18.0.8",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.3.1",
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^6.9.14",
+    "pg": "^8.12.0",
+    "pino": "^8.21.0",
+    "pino-http": "^9.0.0",
+    "uuid": "^9.0.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "merge-stream": "^2.0.0",
+    "supertest": "^7.0.0",
+    "vitest": "^1.6.0"
+  }
+}
