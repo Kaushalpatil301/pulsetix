@@ -4,5 +4,7 @@ node_modules/
 loadtest/results/*.json
 dist/
 coverage/
+context/
+AGENTS.md
 .DS_Store
 Thumbs.db

@@ -106,9 +106,4 @@ export default function () {
   sleep(0.1); // small think time
 }
 
-export function handleSummary(data) {
-  // eslint-disable-next-line no-undef
-  return {
-    stdout: JSON.stringify(data, null, 2),
-  };
-}
+

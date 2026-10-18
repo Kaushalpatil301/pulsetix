@@ -1,15 +1,6 @@
 'use strict';
 
-/**
- * Worker process entry point.
- *
- * Responsibilities:
- *  1. BullMQ worker — processes notification jobs
- *  2. Outbox dispatcher — polls DB and enqueues new outbox rows to BullMQ
- *
- * Separate process from the API server (see architecture.md).
- * HTTP handlers NEVER import this file.
- */
+require('dotenv').config();
 
 const pino = require('pino');
 const { Worker } = require('bullmq');

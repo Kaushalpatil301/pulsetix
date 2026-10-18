@@ -1,5 +1,7 @@
 'use strict';
 
+require('dotenv').config();
+
 const { buildApp, logger } = require('./app');
 const { migrate } = require('./db/migrate');
 const { closePool } = require('./db/pool');
