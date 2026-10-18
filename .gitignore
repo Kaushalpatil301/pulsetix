@@ -6,5 +6,6 @@ dist/
 coverage/
 context/
 AGENTS.md
+DEMO_WALKTHROUGH.md
 .DS_Store
 Thumbs.db
