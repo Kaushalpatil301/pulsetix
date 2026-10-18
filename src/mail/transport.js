@@ -7,7 +7,15 @@ const https = require('https');
 
 let _transport = null;
 
-function sendViaBrevoApi(mailOptions) {
+function getBrevoApiKey() {
+  if (!config.SMTP_PASS) return null;
+  if (config.SMTP_PASS.startsWith('xkeysib-')) return config.SMTP_PASS;
+  if (config.SMTP_PASS.startsWith('keysib-')) return `x${config.SMTP_PASS}`;
+  return null;
+}
+
+function sendViaBrevoApi(mailOptions, apiKey) {
+  const key = apiKey || getBrevoApiKey() || config.SMTP_PASS;
   return new Promise((resolve, reject) => {
     let senderName = 'PulseTix';
     let senderEmail = mailOptions.from || config.SMTP_FROM;
@@ -31,7 +39,7 @@ function sendViaBrevoApi(mailOptions) {
         path: '/v3/smtp/email',
         method: 'POST',
         headers: {
-          'api-key': config.SMTP_PASS,
+          'api-key': key,
           'Content-Type': 'application/json',
           'Content-Length': Buffer.byteLength(payload),
         },
@@ -75,11 +83,12 @@ function createTransport() {
     return _transport;
   }
 
-  // If using Brevo API key (starts with xkeysib-), use HTTPS REST API directly
+  // If using Brevo API key (starts with xkeysib- or keysib-), use HTTPS REST API directly
   // This bypasses cloud port 587/465 blocks and ensures 100% reliable delivery
-  if (config.SMTP_PASS && config.SMTP_PASS.startsWith('xkeysib-')) {
+  const brevoApiKey = getBrevoApiKey();
+  if (brevoApiKey) {
     _transport = {
-      sendMail: (options) => sendViaBrevoApi(options),
+      sendMail: (options) => sendViaBrevoApi(options, brevoApiKey),
     };
     return _transport;
   }
