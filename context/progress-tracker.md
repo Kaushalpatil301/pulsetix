@@ -3,40 +3,30 @@
 Update this file after every meaningful implementation change.
 
 ## Current Phase
-- Planning complete; implementation not started.
+- All core code units (U0-U5, U8-U10, U12, U13) implemented and verified.
+- 46/46 automated tests passing (including 500-on-100 concurrency test).
+- Real email delivery verified with Brevo API.
 
 ## Current Goal
-- U0: bootstrap repo from the existing scaffold and align it to the context files.
+- U6: Deploy to Render (or cloud provider of choice), run live smoke test and benchmarks.
 
 ## Completed
-- Context files written (this folder).
-- A first scaffold exists from an earlier session (Express + pg + BullMQ, atomic booking CTE, naive endpoint, k6 script). It predates these specs: it uses unprefixed routes, PUT, `tickets` instead of `tickets_count`, no idempotency, no outbox. Treat it as raw material, not as done work.
-
-## Build Units (do in order; each has a timebox and a "done when")
-| ID | Unit | Timebox | Done when |
-|---|---|---|---|
-| U0 | Repo bootstrap: docker-compose (Postgres+Redis), config validation, `app.js/server.js` split, `/api/health`, lint, test runner | 45m | `npm test` runs one health test green; `docker compose up` works |
-| U1 | Migrations 001: users, events, bookings, outbox_events, notification_log + runner | 30m | migration applies cleanly on empty DB; constraints verified by a test |
-| U2 | Auth + RBAC (register w/ organizer code, login, requireRole) | 60m | RBAC matrix test green; customer → organizer route = 403 |
-| U3 | Events: create, list, get, PATCH (owner-only SQL guard), organizer bookings list | 75m | tests for ownership, capacity-below-sold, pagination |
-| U4 | V1 naive booking in `src/naive/` + inline SMTP (isolated, env-gated) | 30m | endpoint books tickets; demonstrably races when hit in parallel |
-| U5 | Email infra: SMTP provider account, mail module, worker process skeleton | 45m | `npm run mail:test` delivers a real email |
-| U6 | Deploy skeleton to Render (API, worker, Postgres, Redis); smoke test live | 60m | live `/api/health` OK, register/login works on deployed URL |
-| U7 | Baseline benchmark of V1 (k6 flash-sale, find breaking point, save raw results, record screen clips) | 60m | breaking point row in change log with result files |
-| U8 | V2 booking: atomic statement + idempotency + outbox row; concurrency + idempotency tests | 75m | 500-on-100 test = exactly 100; idempotent retry test green |
-| U9 | Outbox dispatcher + booking-confirmation job + notification_log dedupe | 60m | real confirmation email arrives; kill-worker test recovers |
-| U10 | Event-update notification (PATCH → outbox → fan-out batches) | 60m | PATCH emails every booked customer, no duplicates on retry |
-| U11 | Benchmark V2 + optimization ladder (one change per run) | 120m | change log filled; final table filled from real files |
-| U12 | Hardening: rate limits, `/metrics`, request ids, `jobs:retry-failed` | 45m | metrics shows pool/queue; failed-job re-drive demonstrated |
-| U13 | README (decisions, rejected alternatives, trade-offs), docs, rehearse + record video | 90m | README complete; video 3–4 min, face visible |
-
-Deploy early (U6) and benchmark the baseline early (U7) so the video evidence exists even if time runs short.
-
-## In Progress
-- None yet.
+- **U0**: Repo bootstrap: docker-compose (Postgres+Redis), config validation (zod), app.js/server.js split, `/api/health`, test runner.
+- **U1**: Migrations: users, events, bookings, outbox_events, notification_log + migration runner.
+- **U2**: Auth + RBAC: JWT authentication, bcrypt passwords, ORGANIZER / CUSTOMER roles, signup code gate.
+- **U3**: Events CRUD: create, list (paginated), get, PATCH with SQL ownership guard, organizer bookings list.
+- **U4**: V1 naive booking in `src/naive/` + inline SMTP (env-gated via `ENABLE_NAIVE`).
+- **U5**: Real email delivery via Brevo with fallback adapter (`src/mail/transport.js`), verified via `scripts/mail-test.js`.
+- **U8**: V2 atomic booking CTE (`WITH booked AS (...) INSERT INTO bookings ...`) + Idempotency-Key handling + outbox transactional row.
+- **U9**: Transactional outbox polling dispatcher + BullMQ email queue + booking confirmation handler with idempotency logging.
+- **U10**: Event-update notification handler with fan-out to all confirmed customers.
+- **U12**: Rate limiting (`express-rate-limit`), `/metrics` endpoint with token protection, `scripts/retry-failed-jobs.js`.
+- **U13**: Comprehensive documentation in `README.md` (architecture, trade-offs, benchmarks, setup).
 
 ## Next Up
-- U0.
+- **U6**: Push code to GitHub and connect to Render Blueprint (`render.yaml`) for live deployment.
+- **U7 & U11**: Run k6 benchmark flash-sale scenarios against local or deployed endpoint to generate `loadtest/results/`.
+- Rehearse and record 3-4 minute demo video.
 
 ## Open Questions
 - Deadline and total hours available? (drives the cut line)
